@@ -1,0 +1,36 @@
+# ----------------------------------------------------------------------
+# Python Standard: Virtuelle Umgebung, Cache, Distribution
+# ----------------------------------------------------------------------
+
+# Virtuelle Umgebungen
+venv/
+.venv/
+env/
+.env/
+
+# Python-Cache und kompilierte Dateien
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Build / Distribution
+build/
+dist/
+*.egg-info/
+
+# ----------------------------------------------------------------------
+# IDE & System
+# ----------------------------------------------------------------------
+
+# JetBrains IDEs (PyCharm)
+.idea/
+
+# VS Code
+.vscode/
+
+# IPython Notebook Checkpoints
+.ipynb_checkpoints/
+
+# macOS & Windows
+.DS_Store
+Thumbs.db
