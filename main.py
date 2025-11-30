@@ -1,7 +1,3 @@
-from readline import get_history_item
-
-from numpy.random import gumbel
-
 from card import Card
 from player import Player
 import numpy as np
@@ -72,7 +68,7 @@ def starte_spiel(spielerliste, startrunde=1):
         restkarten = teile_karten_aus(karten, runde, spielerliste)
         trumpf = bestimme_trumpf(restkarten)
         print(f" \n Runde: {runde}, Trumpffarbe: {trumpf}")
-        spiele_runde(spielerliste_deque, runde, restkarten)
+        spiele_runde(spielerliste_deque, runde, restkarten, trumpf)
 
 
         print("-----------"
@@ -83,8 +79,8 @@ def starte_spiel(spielerliste, startrunde=1):
     print(f"Punktetabelle: {tabelle}")
 
 
-def spiele_runde(spielerliste, runde, restkarten):
-    beste_karten = []
+def spiele_runde(spielerliste, runde, restkarten, trumpf):
+    beste_karten = {}
     for spieler in spielerliste_deque:
         print("-----")
         print(spieler)
@@ -92,8 +88,10 @@ def spiele_runde(spielerliste, runde, restkarten):
         # 1. Karten bewerten
         #karten_fuer_stiche = []
 
-        anzahl_stiche, gute_karten = karten_bewerten(spieler.karten_auf_der_hand, bestimme_trumpf(restkarten), runde,1.5)
+        anzahl_stiche, gute_karten_fuer_spieler = karten_bewerten(spieler.karten_auf_der_hand, bestimme_trumpf(restkarten), runde,1.5)
         print(f" angesagte Stiche: {anzahl_stiche}")
+
+        beste_karten[spieler] = gute_karten_fuer_spieler
 
 
         #for karte in spieler.karten_auf_der_hand:
@@ -102,9 +100,9 @@ def spiele_runde(spielerliste, runde, restkarten):
 
         spieler.karten_auf_der_hand = []     #Karten auf der Hand leeren für die nächste Runde
 
-    beste_karten.append(gute_karten)
-    erster_spieler = spielerliste_deque[0]
-    # karten_legen(spieler.karten_auf_der_hand, runde, beste_karten, spielerliste, erster_spieler)
+    #beste_karten.append(gute_karten)
+    #erster_spieler = spielerliste_deque[0]
+    # karten_legen(spieler.karten_auf_der_hand, runde, beste_karten, trumpf, spielerliste_deque)
     spielerliste_deque.rotate(-1)      #ki
 
 
@@ -175,42 +173,60 @@ def karten_bewerten(karten, trumpf_farbe, runde, bewertungs_grenze):
 
 #def eintraege_punkte_tabelle(tabelle, aktuelle_runde, angesagte_stiche, gemachte_stiche, punkte):
 
-def karten_legen (karten, anzahl_karten, gute_karten, spielerliste_deque):
+def karten_legen (karten, anzahl_karten, gute_karten, trumpf_farbe, spielerliste):
     alle_gelegten_karten = []
 
     for i in range(anzahl_karten):
         karten_in_diesem_stich = []
         if i == 1:
-            gewinner_letzte_runde = spielerliste_deque[0]
+            gewinner_letzte_runde = spielerliste[0]
 
-        for karte in karten:
+        for karte in gewinner_letzte_runde.karten_auf_der_hand:
             if karte.value == 13:
                erste_karte = karte
             else:
+                #if min(gewinner_letzte_runde.karten_auf_der_hand) != 0:
+                    #erste_karte = min(gewinner_letzte_runde.karten_auf_der_hand)
+                #else:
                 erste_karte = gewinner_letzte_runde.karten_auf_der_hand.pop(0)
         karten_in_diesem_stich.append(erste_karte.value)
         #alle_gelegten_karten.append(erste_karte)
         bedien_farbe = erste_karte.color
         #ersatz_trumpf = rng.choice(colors)
-        #spielerliste_deque.remove(gewinner_letzte_runde)
+        #spielerliste.remove(gewinner_letzte_runde)
 
         if bedien_farbe in colors:
-            for spieler in spielerliste_deque:
+            for spieler in spielerliste:
                 if spieler == gewinner_letzte_runde:
                     continue
-                legbare_karten = []
+                normale_legbare_karten = []
+                aktuelle_gute_karten = gute_karten[spieler]
                 for karte in spieler.karten_auf_der_hand:
                     if karte.color == bedien_farbe:
-                        legbare_karten.append(karte.value)
+                        normale_legbare_karten.append(karte.value)
 
-                #if max(legbare_karten) < max(karten_in_diesem_stich) and max(legbare_karten) not in gute_karten:
-                    #gelegte_karte = max(legbare_karten)
+                    alle_legbaren_karten = normale_legbare_karten.copy()
+                    if karte == 0|14:
+                        alle_legbaren_karten.append(karte)
 
-                #elif max(legbare_karten) < max(karten_in_diesem_stich) and max(legbare_karten) in gute_karten:
-                    #pass
+                if normale_legbare_karten == []:
+                    normale_legbaren_karten = spieler.karten_auf_der_hand
 
+                #if max(normale_legbare_karten) > max(karten_in_diesem_stich) :
+                    #gelegte_karte = max(normale_legbare_karten)
 
-                #else: gelegte_karte = rng.choice(karten)
+                #elif max(normale_legbare_karten) < max(karten_in_diesem_stich) and max(normale_legbare_karten) in aktuelle_gute_karten:
+
+                    #if max(alle_legbaren_karten) == 14 and 14 not in karten_in_diesem_stich:
+                          #gelegte_karte = max(alle_legbaren_karten)
+
+                    #elif: min(alle_legbaren_karten) == 0
+                        #gelegte_karte = min(alle_legbaren_karten)
+
+                    #else: gelegte_karte = min(normale_legbare_karten)
+
+                #else: gelegte_karte = min(normale_legbare_karten)
+
 
                 #spieler.karten_auf_der_hand.remove(gelegte_karte)
                 #alle_gelegten_karten.append(gelegte_karte)
