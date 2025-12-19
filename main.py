@@ -8,12 +8,14 @@ rng = np.random.default_rng(seed=42)  # Zufallszahlengenerator mit Seed
 colors = ["red", "green", "blue", "yellow"]
 
 spielerliste = [
-Player("Gregor_samsa", 0, []),
-Player( "Billy_Bonka", 0, []),
-Player("Testo_Torsten", 0, []),
+Player("Gregor_samsa", 0, [], spielstil="normal"),
+Player( "Billy_Bonka", 0, [], spielstil="normal"),
+Player("Testo_Torsten", 0, [], spielstil="aggressiv"),
 #Player("Yakari", 0, []),
 #Player("halwa", 0, []),
 ]
+
+gewinner_liste = []
 
 def karten_mischen():
     karten = []
@@ -80,15 +82,13 @@ def berechne_gesamtpunkte(tabelle: pd.DataFrame) -> pd.DataFrame:
 def gewinner_des_spiels(gesamt_reihe):
     gewinner = gesamt_reihe.idxmax()
     punkte = gesamt_reihe.max()
+    gewinner_liste.append(gewinner)
     return gewinner, punkte
 
 
 def print_tabelle(tabelle: pd.DataFrame):
-    """
-    Gibt die Pandas Punkte-Tabelle lesbar in der Konsole aus.
-    """
+    #Gibt die Pandas Punkte-Tabelle lesbar in der Konsole aus.
     print(tabelle.to_string())
-
 
 
 #SPIELLOGIK
@@ -99,15 +99,15 @@ def spiele_runde(runde, trumpf, tabelle, anzahl_runden):
 
     #Kartenausgabe & Ansagen
     for spieler in spielerliste:
-        print("-----")
-        print(f"Spieler: {spieler.name}")
+        #print("-----")
+        #print(f"Spieler: {spieler.name}")
 
-        print(f"Karten auf der Hand ({len(spieler.karten_auf_der_hand)}): {spieler.karten_auf_der_hand}")
-        print("-----")
+        #print(f"Karten auf der Hand ({len(spieler.karten_auf_der_hand)}): {spieler.karten_auf_der_hand}")
+        #print("-----")
 
 
-        anzahl_angesagte_stiche = karten_bewerten(spieler.karten_auf_der_hand, trumpf, 2)
-        print(f" -> Angesagte Stiche: {anzahl_angesagte_stiche}")
+        anzahl_angesagte_stiche = karten_bewerten(spieler.karten_auf_der_hand, trumpf, spieler.bewertungs_grenze)
+        #print(f" -> Angesagte Stiche: {anzahl_angesagte_stiche}")
 
         runden_daten[spieler.name] = [
             anzahl_angesagte_stiche, 0, 0
@@ -157,11 +157,11 @@ def spiele_runde(runde, trumpf, tabelle, anzahl_runden):
         print_tabelle(tabelle)
         gewinner, punkte = gewinner_des_spiels(gesamt_punkte)
         print(f" -> Gewinner ist: {gewinner} mit {punkte} Punkten.")
-    else:
-        print("\n-----------"
-            f"ERGEBNISSE NACH RUNDE {runde}"
-            "-----------")
-        print_tabelle(tabelle)
+    #else:
+        #print("\n-----------"
+        #    f"ERGEBNISSE NACH RUNDE {runde}"
+         #   "-----------")
+        #print_tabelle(tabelle)
 
     return tabelle
 
@@ -177,7 +177,7 @@ def starte_spiel(startrunde=1):
     print("===========================================")
 
     for runde in range(startrunde, runden_anzahl + 1):
-        print(f"\n====================== RUNDE {runde} ======================")
+        #print(f"\n====================== RUNDE {runde} ======================")
 
         karten = karten_mischen()
 
@@ -187,8 +187,8 @@ def starte_spiel(startrunde=1):
         trumpf = bestimme_trumpf(restkarten, runde)
 
 
-        print(f" Startspieler: {spielerliste[runde % len(spielerliste) - 1]}")
-        print(f" Trumpffarbe: {trumpf} | {runde} Karten pro Spieler")
+        #print(f" Startspieler: {spielerliste[runde % len(spielerliste) - 1]}")
+        #print(f" Trumpffarbe: {trumpf} | {runde} Karten pro Spieler")
 
 
         tabelle = spiele_runde(runde, trumpf, tabelle, runden_anzahl)
@@ -235,60 +235,50 @@ def bestimme_trumpf(restkarten, runde):
 
     return trumpf_farbe
 
-def karten_bewerten(karten, trumpf_farbe, bewertungs_grenze):
+
+def karten_bewerten(karten, trumpf_farbe, bewertungs_grenze=1.2):
     anzahl_spieler = len(spielerliste)
-    anzahl_stiche = 0
     anzahl_karten = len(karten)
-    score = 0
+    anzahl_stiche = 0
+    total_score = 0
 
     for karte in karten:
+        score_karte = 0
 
+        # 1. Zauberer: Immer ein starker Score
         if karte.value == 14:
-            score += 2.1
+            score_karte = 1.0  # Ein Zauberer ist fast immer 1 Stich
 
-        elif trumpf_farbe == None:
-            if anzahl_spieler > 3:
-                if anzahl_karten < 6:
-                    score += karte.value / (1.25 * anzahl_karten)
-                else:
-                    score += (1.25 * karte.value) / anzahl_karten
-            elif anzahl_karten < 6:
-                score += karte.value / (1. * anzahl_karten)
-            else:
-                score += (1.75 * karte.value) / anzahl_karten
+        # 2. Narren: Tragen nichts zum Score bei (0)
+        elif karte.value == 0:
+            score_karte = 0
 
-
+        # 3. Trumpf-Karten
         elif karte.color == trumpf_farbe:
-            if anzahl_spieler > 3:
-                if anzahl_karten < 6:
-                    score += karte.value / (1.5 * anzahl_karten)
-                else: score += (1.15 * karte.value) / anzahl_karten
-            elif anzahl_karten < 6:
-                score += karte.value / (1.25 * anzahl_karten)
-            else:
-                score += (1.5 * karte.value) / anzahl_karten
+            # Trumpf ist stärker, wenn man weniger Karten hat (kurze Runden)
+            # Aber in hohen Runden sind hohe Trümpfe fast sichere Stiche
+            score_karte = (karte.value / 13) * 0.9
+            if karte.value > 10: score_karte += 0.2  # Bonus für hohe Trümpfe
 
-
+        # 4. Normale Farben
         else:
-            if anzahl_spieler > 3:
-                if anzahl_karten < 6:
-                    score += karte.value / (2.25 * anzahl_karten)
-                else:
-                    score += karte.value / (1.75 * anzahl_karten)
-            elif anzahl_karten < 6:
-                score += karte.value / (2 * anzahl_karten)
+            basis_wert = (karte.value / 13)
+
+            if trumpf_farbe is None:
+                # Kein Trumpf: Hohe Zahlen sind sehr stark
+                score_karte = basis_wert * 0.8
             else:
-                score += (1.25 * karte.value) / (1 * anzahl_karten)
+                risiko_faktor = 0.5 if anzahl_spieler > 3 else 0.7
+                score_karte = basis_wert * risiko_faktor
 
-        #print(f'karte {karte}, score {score_karte}')
+        total_score += score_karte
 
-        if score > bewertungs_grenze:
-            anzahl_stiche += 1
-            score = 0
+
+    anzahl_stiche = int(total_score / bewertungs_grenze)
 
     return anzahl_stiche
-# ----------
-#
+
+
 def spiele_stich(spielerliste, start_spieler_index, trumpf_farbe, tabelle):
     stich_karten = {}
     bedien_farbe = ""
@@ -315,9 +305,9 @@ def spiele_stich(spielerliste, start_spieler_index, trumpf_farbe, tabelle):
             bedien_farbe = gelegte_karte.color
 
 
-    print(f"Der Stich: {stich_karten}")
+    #print(f"Der Stich: {stich_karten}")
     gewinner, karte = gewinner_des_stiches(stich_karten, bedien_farbe, trumpf_farbe)
-    print(f"Gewinner des Stiches ist: {gewinner} mit {karte}")
+    #print(f"Gewinner des Stiches ist: {gewinner} mit {karte}")
 
     return gewinner
 
@@ -470,4 +460,20 @@ def wie_viele_gemachte_stiche(spieler, stichgewinner):
 
 
 
-starte_spiel(1)
+
+
+def spiele_spielen(anzahl_spiele):
+    for i in range (anzahl_spiele):
+        starte_spiel(1)
+
+anzahl_spiele = int(input())
+spiele_spielen(anzahl_spiele)
+
+def gewinn_wahrscheinlichkeiten(gewinner_liste, anzahl_spiele):
+    anzahl_wahrscheinlichkeiten = {}
+    for spieler in spielerliste:
+        anzahl_wahrscheinlichkeiten[spieler] = gewinner_liste.count(spieler.name) / anzahl_spiele
+    print(anzahl_wahrscheinlichkeiten)
+
+gewinn_wahrscheinlichkeiten(gewinner_liste, anzahl_spiele)
+
