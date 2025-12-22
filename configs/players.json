@@ -1,0 +1,10 @@
+{
+  "spieler": [
+    {"name": "Gregor_samsa", "spielstil": "normal"},
+    {"name": "Billy_Bonka", "spielstil": "normal"},
+    {"name": "Testo_Torsten", "spielstil": "aggressiv"}
+  ],
+  "simulation_settings": {
+    "seed": 42
+  }
+}
