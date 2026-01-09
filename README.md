@@ -3,13 +3,16 @@
 Project Organization
 
 Course: Simulations Tools WI25/26
+
 Date: 9.01.2026
+
 Authors: Janis Müller, Phillip Engel
 
 
 This repository contains a Python-based Monte Carlo Simulation of the card game Wizard. The primary objective is to investigate the statistical success and risks of an aggressive bidding and playing strategy compared to standard AI behaviors across different player counts (3–6 players).
 
-Official game rules can be found here: Amigo Wizard Rules
+Official game rules can be found here: https://blog.amigo-spiele.de/content/ap/rule/06900-GB-AmigoRule.pdf
+
 📂 Project Structure
 
 Following the organizational standards for data science projects, the repository is structured as follows:
