@@ -16,8 +16,8 @@ Official game rules can be found here: https://blog.amigo-spiele.de/content/ap/r
 📂 Project Structure
 
 Following the organizational standards for data science projects, the repository is structured as follows:
-Plaintext
 
+```plaintext
 wizard-simulation/
 ├── configs/            # Configuration files (JSON player profiles)
 ├── notebooks/          # Data exploration and visualization
