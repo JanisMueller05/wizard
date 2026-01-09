@@ -19,7 +19,6 @@ rng = np.random.default_rng(seed=42)  # Random number generator with seed
 
 colors = ["red", "green", "blue", "yellow"]
 
-winner_list = []
 
 def load_player_from_config():
     """
@@ -55,14 +54,14 @@ def shuffle_cards():
     return cards
 
 
-def number_of_rounds_to_be_played(number_of_playerss):
+def number_of_rounds_to_be_played(number_of_players):
     """
     Calculates the total number of rounds based on the number of players.
 
     Args:
         number_of_playerss (int): The total number of people participating in the game.
     """
-    return 60 // number_of_playerss
+    return 60 // number_of_players
 
 
 def create_points_table(player_names: list[str]) -> pd.DataFrame:
@@ -126,16 +125,21 @@ def calculate_total_points(table: pd.DataFrame) -> pd.DataFrame:
 
 def winner_of_the_game(total_row):
     """
-    Identifies the player with the highest total points.
+    Identifies all players with the highest total points to handle ties correctly.
 
     Args:
         total_row (pd.Series): A Series containing the final point totals for each player.
+
+    Returns:
+        tuple[list[str], int]: A list of winner names and the maximum score achieved.
     """
-    #AI
-    winner = total_row.idxmax()
-    points = total_row.max()
-    winner_list.append(winner)
-    return winner, points
+    # Find the maximum score achieved in the game
+    max_points = total_row.max()
+
+    # Identify all players who reached this maximum score (handling draws)
+    winners = total_row[total_row == max_points].index.tolist()
+
+    return winners, max_points
 
 
 def print_table(table: pd.DataFrame):
@@ -279,8 +283,15 @@ def start_game(starting_round, playerlist):
         # Execute the trick-taking phase and update scores
         table = play_round(current_round, trump_color, table, round_number, playerlist)
 
+    # Calculate total points after all rounds are finished
+    # We use cross-section 'xs' to get the 'points' columns
+    total_points_series = table.xs('points', level='category', axis=1).sum(axis=0)
 
-    #print("\n Game is over.")
+    # Capture winners from the calculation function
+    winners, max_score = winner_of_the_game(total_points_series)
+
+    return winners, max_score
+
 
 
 
@@ -296,6 +307,7 @@ def distribute_cards(cards, number_of_cards, playerlist):
     Returns:
         list: The remaining cards in the deck after distribution.
     """
+
     for i in range(number_of_cards):
         for player in playerlist:
             top_card = cards.pop(0)
@@ -678,26 +690,42 @@ def play_games(number_of_games, playerlist):
     Runs a simulation of multiple complete Wizard games.
 
     Args:
-        number_of_games (int): How many full games should be simulated.
-        playerlist (list): The list of players participating in the simulation.
-        """
-    for i in range (number_of_games):
-        start_game(1, playerlist)
+        number_of_games (int): Total number of games to simulate.
+        playerlist (list): List of Player objects.
+
+    Returns:
+        list[str]: A list containing the names of the winners of each game.
+    """
+    all_winners_collected = []
+
+    for i in range(number_of_games):
+        # We capture the winners returned by each individual game
+        winners, _ = start_game(1, playerlist)
+        # Add all winners (handles ties) to the overall result list
+        all_winners_collected.extend(winners)
+
+    return all_winners_collected
 
 
-def winning_probabilities(winner_list, number_of_games, playerlist):
+
+
+def winning_probabilities(winner_data_list, number_of_games, playerlist):
     """
     Calculates the win rate for each player and exports the results.
 
     Args:
-        winner_list (list): List containing the names of the winners of all simulated games.
+        winner_data_list (list): The list of winner names from play_games.
         number_of_games (int): Total number of games played.
         playerlist (list): List of all participating players.
 
     Returns:
         pd.DataFrame: A DataFrame showing win rates as formatted percentages.
     """
-    probabilities = {player.name: winner_list.count(player.name) / number_of_games for player in playerlist}
+
+    probabilities = {
+        player.name: winner_data_list.count(player.name) / number_of_games
+        for player in playerlist
+    }
 
     df = pd.DataFrame(probabilities, index=["winningchance"])
 
@@ -743,3 +771,35 @@ def export_with_metadata(df, filename, seed=42):
         df.to_csv(f, index=True)
 
     print(f" Results successfully saved under: {path}")
+
+
+def run_full_simulation(min_players=3, max_players=6, games_per_round=1000):
+    """
+    High-level function to run multiple scenarios for the Notebook analysis.
+
+    Args:
+        min_players (int): Starting number of players (default: 3).
+        max_players (int): Ending number of players (default: 6).
+        games_per_round (int): Simulation scale (default: 1000).
+
+    Returns:
+        pd.DataFrame: A structured DataFrame for plotting win rates.
+    """
+    results_data = []
+    full_player_pool = load_player_from_config()
+
+    for n in range(min_players, max_players + 1):
+        active_players = full_player_pool[:n]
+
+        # Capture return value from simulation
+        winners_list = play_games(games_per_round, active_players)
+
+        for player in active_players:
+            win_count = winners_list.count(player.name)
+            results_data.append({
+                "PlayerCount": n,
+                "Player": player.name,
+                "Winrate": (win_count / games_per_round) * 100
+            })
+
+    return pd.DataFrame(results_data)
