@@ -1,25 +1,25 @@
-# 🧙 Wizard Strategy Simulation
+🧙 Wizard Strategy Simulation
 
-This repository contains a Python-based **Monte Carlo Simulation** of the card game **Wizard**.
-The primary objective is to investigate the statistical success and risks of an aggressive bidding and playing strategy compared to standard AI behaviors across different player counts (3-6 players).
-Here you will find the rules of the game: https://blog.amigo-spiele.de/content/ap/rule/06900-GB-AmigoRule.pdf
+Project Organization
 
----
+Course: Simulations Tools WI25/26
+Date: 9.01.2026
+Authors: Janis Müller, Phillip Engel
 
-## 📂 Project Structure
+
+This repository contains a Python-based Monte Carlo Simulation of the card game Wizard. The primary objective is to investigate the statistical success and risks of an aggressive bidding and playing strategy compared to standard AI behaviors across different player counts (3–6 players).
+
+Official game rules can be found here: Amigo Wizard Rules
+📂 Project Structure
 
 Following the organizational standards for data science projects, the repository is structured as follows:
+Plaintext
 
-```text
 wizard-simulation/
-├── configs/            # Configuration files
-│   └── players.json    # Player profiles and playing styles
-├── data/               # Raw and processed simulation data
+├── configs/            # Configuration files (JSON player profiles)
 ├── notebooks/          # Data exploration and visualization
 │   └── wizard_analysis.ipynb  # Main analysis notebook
-├── reports/            # Generated output
-│   ├── figures/        # Exported plots (PNG/PDF)
-│   └── last_simulation.csv # Simulation results with metadata
+├── reports/            # Generated output (Plots & CSV)
 ├── src/                # Core logic (Production Code)
 │   ├── card.py         # Card class and logic
 │   ├── player.py       # Player class and strategy handling
@@ -41,26 +41,30 @@ pip install -r requirements.txt
 
 You can interact with the project in two ways:
 
-    Command Line Interface: Run a quick simulation with user-defined player counts.
+    Command Line Interface (CLI): Run a quick simulation with user-defined player counts to see immediate results in the terminal.
     Bash
 
 python main.py
 
-Jupyter Notebook: For a detailed graphical analysis and win-rate comparison, open the notebook:
+Jupyter Notebook: For a detailed graphical analysis, win-rate comparisons, and trend visualizations across all player counts:
 Bash
 
     jupyter notebook notebooks/wizard_analysis.ipynb
 
 🔬 Methodology & Reproducibility
 
-    Aggressive AI: The strategy (Player: "Testo_Torsten") implements a bidding bias (+0.7 on predicted tricks) and an offensive trick-taking logic.
+    Aggressive AI Strategy: The "Aggressive" profile (Player: Testo_Torsten) is characterized by:
 
-    Separation of Concerns: Business logic is strictly kept within the src/ modules, while the notebooks/ are used solely for presentation and visualization.
+        Bidding Bias: A systematic overestimation of hand strength (+0.7 bias on predicted tricks).
 
-    Consistency: A fixed random seed (42) is utilized across all modules to ensure that simulation results are 100% reproducible.
+        Offensive Lead: Playing high trump cards early to "bleed" opponents' resources.
 
-👥 Contributors
+        Strategic Trump Choice: Maximizing suit frequency when choosing the trump color via a Wizard card.
 
-    Team Member 1 - [Janis Müller]
+    The "Positioning Effect": Our analysis identified that players following the aggressive actor (e.g., Gregor_Samsa) often experience a significant "boost" in win rates (up to 49% in 3-player games), as they can exploit the resource depletion caused by the aggressor.
 
-    Team Member 2 - [Phillip Engel]
+    Scale & Skalability: We use a Monte Carlo approach with 1,000 games per scenario to ensure results are statistically significant. The simulation clearly shows that aggressive strategies collapse as the player count increases due to higher trick-competition.
+
+    Separation of Concerns: Business logic is strictly encapsulated within the src/ modules, while the notebooks/ are used solely for presentation and visualization.
+
+    Consistency: A fixed random seed (42) is utilized across all modules to ensure that all results are 100% reproducible.
